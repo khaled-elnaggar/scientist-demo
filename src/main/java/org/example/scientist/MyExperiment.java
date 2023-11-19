@@ -1,4 +1,4 @@
-package org.example;
+package org.example.scientist;
 
 import com.github.rawls238.scientist4j.Experiment;
 import com.github.rawls238.scientist4j.Observation;

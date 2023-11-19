@@ -1,8 +1,10 @@
-package org.example;
+package org.example.scientist;
 
 import com.github.rawls238.scientist4j.metrics.DropwizardMetricsProvider;
 import io.dropwizard.metrics5.ConsoleReporter;
 import io.dropwizard.metrics5.MetricRegistry;
+import org.example.model.Product;
+import org.example.model.ProductRest;
 import org.math.plot.Plot2DPanel;
 
 import javax.swing.*;

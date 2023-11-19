@@ -5,19 +5,12 @@ import io.dropwizard.metrics5.ConsoleReporter;
 import io.dropwizard.metrics5.MetricRegistry;
 import org.math.plot.Plot2DPanel;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import java.util.stream.IntStream;
 
 
 public class ExperimentRun {
@@ -40,23 +33,34 @@ public class ExperimentRun {
     runExperiment();
     plotMatchesAndMismatches();
     plotMismatches();
-//    plotPerformance();
-//    reporter.report();
   }
+
+  private void runExperiment() throws Exception {
+    for (int i = 0; i < 1000; i++) {
+      int randomNumber = (int) (Math.random() * 5 + 1);
+      Callable<Product> oldCodePath = () -> productRest.getProductsV1(randomNumber);
+      Callable<Product> newCodePath = () -> productRest.getProductsV2(randomNumber);
+      experiment.run(oldCodePath, newCodePath);
+    }
+  }
+
   private void plotMatchesAndMismatches() {
     TreeMap<Double, Double> mismatchPerSecond = experiment.getMismatchPerSecond();
     TreeMap<Double, Double> matchPerSecond = experiment.getMatchPerSecond();
+
     int minLength = Math.min(mismatchPerSecond.size(), matchPerSecond.size());
     double[] x = new double[minLength];
-    double[] yMismatches = new double[minLength];
     double[] yMatches = new double[minLength];
     int next = 0;
+
     for (Map.Entry<Double, Double> point : mismatchPerSecond.entrySet()) {
-      if(next >= minLength) break;
+      if (next >= minLength) break;
       x[next] = point.getKey();
       yMatches[next] = point.getValue();
       next++;
     }
+
+    double[] yMismatches = new double[minLength];
     next = 0;
     for (Map.Entry<Double, Double> point : matchPerSecond.entrySet()) {
       yMismatches[next] = point.getValue();
@@ -76,6 +80,7 @@ public class ExperimentRun {
     frame.setContentPane(plot);
     frame.setVisible(true);
   }
+
   private void plotMismatches() {
     TreeMap<Double, Double> mismatchPerSecond = experiment.getMismatchPerSecond();
     double[] x = new double[mismatchPerSecond.size()];
@@ -97,37 +102,5 @@ public class ExperimentRun {
     frame.setSize(IMAGE_WIDTH, IMAGE_HEIGHT);
     frame.setContentPane(plot);
     frame.setVisible(true);
-
-//    saveImage(plot, "mismatches.jpeg");
-  }
-
-  private void plotPerformance() {
-    List<Double> candidatePerformance = experiment.getCandidatePerformance();
-    List<Double> controlPerformance = experiment.getControlPerformance();
-
-    double[] x = IntStream.range(1, candidatePerformance.size()).mapToDouble(n -> n).toArray();
-    double[] yCandidatePerformance = candidatePerformance.stream().mapToDouble(n -> n).toArray();
-    double[] yControlPerformance = controlPerformance.stream().mapToDouble(n -> n).toArray();
-
-    Plot2DPanel plot = new Plot2DPanel();
-    plot.addLinePlot("Candidate Performance", x, yCandidatePerformance);
-    plot.addLinePlot("Control Performance", x, yControlPerformance);
-    plot.setAxisLabels("# Run", "Runtime");
-
-    // put the PlotPanel in a JFrame, as a JPanel
-    JFrame frame = new JFrame("Mismatch plot");
-    frame.setSize(IMAGE_WIDTH, IMAGE_HEIGHT);
-    frame.setContentPane(plot);
-    frame.setVisible(true);
-//    saveImage(plot, "performance.jpeg");
-  }
-
-  private void runExperiment() throws Exception {
-    for (int i = 0; i < 1000; i++) {
-      int randomNumber = (int) (Math.random() * 5 + 1);
-      Callable<Product> oldCodePath = () -> productRest.getProductsV1(randomNumber);
-      Callable<Product> newCodePath = () -> productRest.getProductsV2(randomNumber);
-      experiment.run(oldCodePath, newCodePath);
-    }
   }
 }

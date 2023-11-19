@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -19,15 +20,15 @@ import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 
-public class Demo {
+public class ExperimentRun {
   ProductRest productRest = new ProductRest();
   private MyExperiment<Product> experiment;
   private ConsoleReporter reporter;
-  private final static Logger logger = Logger.getLogger(Demo.class.getName());
+  private final static Logger logger = Logger.getLogger(ExperimentRun.class.getName());
   private final static int IMAGE_WIDTH = 1800;
   private final static int IMAGE_HEIGHT = 1000;
 
-  public Demo() {
+  public ExperimentRun() {
     experiment = new MyExperiment<>("product", new DropwizardMetricsProvider());
     reporter = ConsoleReporter.forRegistry((MetricRegistry) experiment.getMetricsProvider().getRegistry())
             .convertRatesTo(TimeUnit.SECONDS)
@@ -37,11 +38,44 @@ public class Demo {
 
   public void scientistExperiment() throws Exception {
     runExperiment();
+    plotMatchesAndMismatches();
     plotMismatches();
-    plotPerformance();
+//    plotPerformance();
 //    reporter.report();
   }
+  private void plotMatchesAndMismatches() {
+    TreeMap<Double, Double> mismatchPerSecond = experiment.getMismatchPerSecond();
+    TreeMap<Double, Double> matchPerSecond = experiment.getMatchPerSecond();
+    int minLength = Math.min(mismatchPerSecond.size(), matchPerSecond.size());
+    double[] x = new double[minLength];
+    double[] yMismatches = new double[minLength];
+    double[] yMatches = new double[minLength];
+    int next = 0;
+    for (Map.Entry<Double, Double> point : mismatchPerSecond.entrySet()) {
+      if(next >= minLength) break;
+      x[next] = point.getKey();
+      yMatches[next] = point.getValue();
+      next++;
+    }
+    next = 0;
+    for (Map.Entry<Double, Double> point : matchPerSecond.entrySet()) {
+      yMismatches[next] = point.getValue();
+      next++;
+    }
 
+    for (int i = x.length - 1; i >= 0; i--) {
+      x[i] -= x[0];
+    }
+    Plot2DPanel plot = new Plot2DPanel();
+    plot.addLinePlot("matches", x, yMatches);
+    plot.addLinePlot("mismatches", x, yMismatches);
+    plot.setAxisLabels("# Second", "Count");
+
+    JFrame frame = new JFrame("Accuracy plot");
+    frame.setSize(IMAGE_WIDTH, IMAGE_HEIGHT);
+    frame.setContentPane(plot);
+    frame.setVisible(true);
+  }
   private void plotMismatches() {
     TreeMap<Double, Double> mismatchPerSecond = experiment.getMismatchPerSecond();
     double[] x = new double[mismatchPerSecond.size()];
@@ -56,7 +90,7 @@ public class Demo {
       x[i] -= x[0];
     }
     Plot2DPanel plot = new Plot2DPanel();
-    plot.addLinePlot("my plot", x, y);
+    plot.addLinePlot("mismatches", x, y);
     plot.setAxisLabels("# Second", "Mismatches");
 
     JFrame frame = new JFrame("Mismatch plot");
@@ -94,18 +128,6 @@ public class Demo {
       Callable<Product> oldCodePath = () -> productRest.getProductsV1(randomNumber);
       Callable<Product> newCodePath = () -> productRest.getProductsV2(randomNumber);
       experiment.run(oldCodePath, newCodePath);
-    }
-  }
-
-  private void saveImage(Plot2DPanel panel, String name) {
-    BufferedImage bi = new BufferedImage(panel.getWidth(), panel.getHeight(), BufferedImage.TYPE_INT_RGB);
-    Graphics2D g = bi.createGraphics();
-    panel.paint(g);
-    g.dispose();
-    try {
-      ImageIO.write(bi, "jpeg", new File(name));
-    } catch (Exception e) {
-      e.printStackTrace();
     }
   }
 }

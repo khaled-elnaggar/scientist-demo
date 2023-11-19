@@ -15,12 +15,17 @@ public class MyExperiment<T> extends Experiment<T> {
   }
 
   private final TreeMap<Double, Double> mismatchPerSecond = new TreeMap<>();
+  private final TreeMap<Double, Double> matchPerSecond = new TreeMap<>();
 
   private final List<Double> candidatePerformance = new ArrayList<>();
   private final List<Double> controlPerformance = new ArrayList<>();
 
   public TreeMap<Double, Double> getMismatchPerSecond() {
     return this.mismatchPerSecond;
+  }
+
+  public TreeMap<Double, Double> getMatchPerSecond() {
+    return matchPerSecond;
   }
 
   public List<Double> getCandidatePerformance() {
@@ -35,7 +40,9 @@ public class MyExperiment<T> extends Experiment<T> {
   protected void publish(Result<T> r) {
     Double now = (System.currentTimeMillis() / 1000) * 1.0;
 
-    if (!r.getMatch().get()) {
+    if (r.getMatch().get()) {
+      matchPerSecond.put(now, matchPerSecond.getOrDefault(now, 0D) + 1);
+    } else {
       mismatchPerSecond.put(now, mismatchPerSecond.getOrDefault(now, 0D) + 1);
     }
 

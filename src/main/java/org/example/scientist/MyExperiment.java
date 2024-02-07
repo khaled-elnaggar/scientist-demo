@@ -37,17 +37,17 @@ public class MyExperiment<T> extends Experiment<T> {
   }
 
   @Override
-  protected void publish(Result<T> r) {
+  protected void publish(Result<T> result) {
     Double now = (System.currentTimeMillis() / 1000) * 1.0;
 
-    if (r.getMatch().get()) {
+    if (result.getMatch().get()) {
       matchPerSecond.put(now, matchPerSecond.getOrDefault(now, 0D) + 1);
     } else {
       mismatchPerSecond.put(now, mismatchPerSecond.getOrDefault(now, 0D) + 1);
     }
 
-    Observation<T> candidateObservation = r.getCandidate().get();
-    Observation<T> controlObservation = r.getControl();
+    Observation<T> candidateObservation = result.getCandidate().get();
+    Observation<T> controlObservation = result.getControl();
 
     candidatePerformance.add(candidateObservation.getDuration() / 1000 * 1.0);
     controlPerformance.add(controlObservation.getDuration() / 1000 * 1.0);

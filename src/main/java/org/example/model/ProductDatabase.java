@@ -21,8 +21,10 @@ public class ProductDatabase {
 
   public Product getProductV2(int id) {
     try {
+
       int randomNumber = (int) (Math.random() * 10 + 1);
       Thread.sleep(randomNumber);
+
       if (id == 1) {
         return new Product(1, "Product1");
       } else if (id == 2) {
